@@ -19,61 +19,86 @@ using namespace boost::multiprecision;
 
 
 struct Fraction{
-  int256_t numerator;
-  int256_t denominator;
+  int512_t numerator;
+  int512_t denominator;
 
 
-  Fraction(std::string input) {
-    std::string delimiter = "/";
-    size_t pos = 0;
-    std::string token;
-    int256_t num;
-    int256_t den;
-    int i = 0;
-    while ((pos = input.find(delimiter)) != std::string::npos) {
-      token = input.substr(0, pos);
-      if (i == 0) {
-        num = boost::lexical_cast<int256_t>(token);
-      } else {
-        den = boost::lexical_cast<int256_t>(token);
+    std::string removeLeadingSpaces(std::string str) {
+      // Find the first character position after excluding leading white space characters
+      size_t startPos = str.find_first_not_of(" \t\n\r\f\v");
+
+      // Check whether the string is all whitespaces or empty
+      if (startPos == std::string::npos) {
+        return "";
       }
-      input.erase(0, pos + delimiter.length());
-      ++i;
+
+      // Erase the leading whitespaces
+      str.erase(0, startPos);
+
+      return str;
     }
-    if (i == 0) {
-      num = boost::lexical_cast<int256_t>(input);
-      den = 1;
-    } else {
-      den = boost::lexical_cast<int256_t>(input);
-    }
+
+
+  Fraction(std::string fraction) {
+
+    size_t slashPos = fraction.find('/');
+
+    // Extracting numerator and denominator
+    std::string numeratorStr = fraction.substr(0, slashPos);
+    std::string denominatorStr = fraction.substr(slashPos + 1);
+
+    // Removing leading spaces
+    numeratorStr = removeLeadingSpaces(numeratorStr);
+    denominatorStr = removeLeadingSpaces(denominatorStr);
+
+
+
+    // Converting to integers
+    int512_t num = int512_t(numeratorStr);
+    int512_t den = int512_t(denominatorStr);
+
+
 
     if (den == 0) {
       throw std::invalid_argument("Denominator cannot be zero.");
     }
-    int256_t gcd = boost::math::gcd(num, den);
+    int512_t gcd = boost::math::gcd(num, den);
     numerator = num / gcd;
     denominator = den / gcd;
 
+    if (denominator < 0) {
+      numerator *= -1;
+      denominator *= -1;
+    }
+
   }
 
-  Fraction(int256_t num, int256_t den) : numerator(num), denominator(den)
+  Fraction(int512_t num, int512_t den) : numerator(num), denominator(den)
   {
 
     if (den == 0) {
       throw std::invalid_argument("Denominator cannot be zero.");
     }
-    int256_t gcd = boost::math::gcd(num, den);
+    int512_t gcd = boost::math::gcd(num, den);
     numerator /= gcd;
     denominator /= gcd;
   }
 
   Fraction operator*(const Fraction& other) const {
-    int256_t new_numerator = numerator * other.numerator;
-    int256_t new_denominator = denominator * other.denominator;
+    int512_t new_numerator = numerator * other.numerator;
+    int512_t new_denominator = denominator * other.denominator;
 
     return Fraction(new_numerator, new_denominator);
   }
 
+
+  void operator<<(std::ostream& os) const {
+    os << numerator << "/" << denominator;
+  }
+
+  std::string toString() const {
+    return numerator.str() + "/" + denominator.str();
+  }
 
 };
 

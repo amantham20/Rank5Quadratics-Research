@@ -1,9 +1,151 @@
 
 #include <iostream>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/algorithm/string.hpp>
+#include "Fraction.hpp"
+#include <boost/math/common_factor.hpp>
+#include <fstream>
+
+
+
+using std::string;
+using std::vector;
+using std::ifstream;
+using std::cout;
+using std::cerr;
+using std::endl;
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::seconds;
+
+
+using namespace boost::multiprecision;
+
+bool is_square(const cpp_int& n) {
+  if (n < 0) {
+    return false; // Negative numbers are not perfect squares
+  }
+
+  cpp_int root = sqrt(n);
+  return root * root == n;
+}
+
+void process_result(const std::string& i, const std::string& j, const Fraction& val_i, const Fraction& val_j) {
+  Fraction product = val_i * val_j;
+
+  if (is_square(product.numerator) && is_square(product.denominator)) {
+    std::cout << "Square Free" << std::endl;
+    std::cout << i << ", " << j << std::endl;
+    std::cout << val_i.numerator << "/" << val_i.denominator << ", "
+         << val_j.numerator << "/" << val_j.denominator << std::endl;
+    std::cout << product.numerator << "/" << product.denominator << std::endl;
+    // Log info here
+  }
+}
+
+void show_progress(size_t current, size_t total, std::chrono::steady_clock::time_point start_time) {
+  const int barWidth = 70;
+  double progress = static_cast<double >(current) / total;
+  int barLength = static_cast<int>(progress * barWidth);
+
+  // Calculate elapsed time
+  auto current_time = std::chrono::steady_clock::now();
+  auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
+
+
+
+  std::cout << "[";
+  for (int i = 0; i < barLength; ++i) {
+    std::cout << "=";
+  }
+  for (int i = barLength; i < barWidth; ++i) {
+    std::cout << " ";
+  }
+  std::cout << "] ";
+
+//  print progress with a precision of 4 decimal places
+  std::cout.precision(4);
+  std::cout << std::fixed << progress * 100.0 << "%";
+
+
+
+  // Display estimated time remaining and time to complete
+  if (current > 0) {
+    std::cout << " ETA: " << elapsed_time/progress << "s";
+    std::cout << " Elapsed: " << elapsed_time << "s" ;
+  }
+
+  std::cout << "\r";
+  std::cout.flush();
+}
+
+vector<string> split(const string& str, const string& delim) {
+  vector<string> tokens;
+  boost::split(tokens, str, boost::is_any_of(delim));
+  return tokens;
+}
+// 100 = 3002
+// 1000 = 303791
 
 
 int main() {
-  std::cout << "Hello, World!" << std::endl;
+  string filename = "../Numbers/NumberAndOut1000.log";
+  ifstream file(filename);
+  string line;
+
+//  size_t total_lines = 3002;
+  size_t total_lines = 303791;
+
+  total_lines = total_lines * (total_lines + 1) / 2;
+
+  if (!file.is_open()) {
+    cerr << "Error opening file." << endl;
+    return 1;
+  }
+
+  // Start timing
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
+  int line_count = 0;
+
+  while (getline(file, line)) {
+    vector<string> split_line1 = split(line, ",");
+
+    Fraction frac1(split_line1[1]); // Assuming the fractions are integers
+
+    ifstream file2(filename);
+    string line2;
+    while (getline(file2, line2)) {
+      if (line == line2) {
+        break;
+      }
+
+      vector<string> split_line2 = split(line2, ",");
+      Fraction frac2(split_line2[1]); // Assuming the fractions are integers
+
+      try {
+        process_result(split_line1[0], split_line2[0], frac1, frac2);
+      } catch (std::invalid_argument& e) {
+          std::cout << "Invalid Argument" << std::endl;
+          std::cout << split_line1[0] <<  split_line2[0] << frac1.toString() <<  frac2.toString() << std::endl;
+      }
+
+    }
+
+    line_count += 1;
+    if (line_count % 150 == 0) {
+      size_t tempCount = line_count * (line_count + 1) / 2;
+      show_progress(tempCount, total_lines, start);
+    }
+
+    file2.close();
+  }
+
+  // End timing
+  std::chrono::steady_clock::time_point stop = std::chrono::steady_clock::now();
+  auto duration = duration_cast<seconds>(stop - start);
+  cout << duration.count() << " seconds" << endl;
+
   return 0;
 }
 
