@@ -30,8 +30,79 @@ bool is_square(const cpp_int& n) {
   return root * root == n;
 }
 
+bool is_square2(const cpp_int& n) {
+  if (n < 0) {
+    return false; // Negative numbers are not perfect squares
+  }
+
+  cpp_int n1 = n;
+
+  size_t count = 0;
+  while (n1 % 2 == 0) {
+    n1 = n1 / 2;
+    count += 1;
+  }
+
+  if (count % 2 == 1) {
+    return false;
+  }
+
+
+  for (int i = 3; i <= sqrt(n1); i = i + 2) {
+    // While i divides n, print i and divide n
+
+    count  = 0;
+    while (n1 % i == 0) {
+      n1 = n1 / i;
+      count += 1;
+    }
+
+    if (count % 2 == 1) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+//bool isEvenFactors(const cpp_int& n, const cpp_int& f) {
+//  cpp_int n1 = n;
+//
+//  size_t count = 0;
+//  while (n1 % f == 0) {
+//    n1 = n1 / f;
+//    count += 1;
+//  }
+//
+//  return count % 2 == 0;
+//}
+
 void process_result(const std::string& i, const std::string& j, const Fraction& val_i, const Fraction& val_j) {
   Fraction product = val_i * val_j;
+
+  auto numMod = product.numerator % 10;
+  auto denMod = product.denominator % 10;
+
+  if (numMod == 2 || numMod == 3 || numMod == 7 || numMod == 8) {
+    return;
+  }
+
+  if (denMod == 2 || denMod == 3 || denMod == 7 || denMod == 8) {
+    return;
+  }
+
+//  if (isEvenFactors(product.numerator, 2) || isEvenFactors(product.denominator, 2)) {
+//    return;
+//  }
+
+  if (product.numerator % 4 == 2 || product.denominator % 4 == 2) {
+    return;
+  }
+
+  if (product.numerator % 4 == 3 || product.denominator % 4 == 3) {
+    return;
+  }
+
 
   if (is_square(product.numerator) && is_square(product.denominator)) {
     std::cout << "Square Free" << std::endl;
@@ -85,16 +156,18 @@ vector<string> split(const string& str, const string& delim) {
   return tokens;
 }
 // 100 = 3002
+// 150 = 6817
 // 1000 = 303791
 
 
 int main() {
-  string filename = "../Numbers/NumberAndOut1000.log";
+  string filename = "../Numbers/NumberAndOut150.log";
   ifstream file(filename);
   string line;
 
 //  size_t total_lines = 3002;
-  size_t total_lines = 303791;
+  size_t total_lines = 6817;
+//  size_t total_lines = 303791;
 
   total_lines = total_lines * (total_lines + 1) / 2;
 
@@ -123,6 +196,13 @@ int main() {
       vector<string> split_line2 = split(line2, ",");
       Fraction frac2(split_line2[1]); // Assuming the fractions are integers
 
+      if (((frac1.numerator & 1) ^ (frac2.numerator & 1)) || ((frac1.denominator & 1) ^ (frac2.denominator & 1))){
+        continue;
+      }
+
+
+
+
       try {
         process_result(split_line1[0], split_line2[0], frac1, frac2);
       } catch (std::invalid_argument& e) {
@@ -133,10 +213,10 @@ int main() {
     }
 
     line_count += 1;
-    if (line_count % 150 == 0) {
+//    if (line_count % 150 == 0) {
       size_t tempCount = line_count * (line_count + 1) / 2;
       show_progress(tempCount, total_lines, start);
-    }
+//    }
 
     file2.close();
   }
