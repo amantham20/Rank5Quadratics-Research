@@ -14,7 +14,7 @@ add_executable(MathResearch2 main.cpp Fraction.hpp)
 target_link_libraries(MathResearch2 PRIVATE Boost::boost)
 
 # Test executable
-add_executable(MathResearch2_Tests tests/test1.cpp Fraction.hpp tests/FractionTest.cpp)
+add_executable(MathResearch2_Tests tests/test1.cpp Fraction.hpp tests/FractionTest.cpp tests/BitsetTest.cpp)
 target_link_libraries(MathResearch2_Tests PRIVATE Catch2::Catch2WithMain Boost::boost)
 
 include(Ctest)

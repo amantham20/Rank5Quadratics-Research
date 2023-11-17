@@ -3,9 +3,12 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/algorithm/string.hpp>
 #include "Fraction.hpp"
-#include <boost/math/common_factor.hpp>
-#include <fstream>
 
+#include <boost/math/common_factor.hpp>
+
+#include <fstream>
+#include <chrono>
+#include <queue>
 
 
 using std::string;
@@ -21,7 +24,7 @@ using std::chrono::seconds;
 
 using namespace boost::multiprecision;
 
-bool is_square(const cpp_int& n) {
+bool is_square(const cpp_int &n) {
   if (n < 0) {
     return false; // Negative numbers are not perfect squares
   }
@@ -30,7 +33,7 @@ bool is_square(const cpp_int& n) {
   return root * root == n;
 }
 
-bool is_square2(const cpp_int& n) {
+bool is_square2(const cpp_int &n) {
   if (n < 0) {
     return false; // Negative numbers are not perfect squares
   }
@@ -51,7 +54,7 @@ bool is_square2(const cpp_int& n) {
   for (int i = 3; i <= sqrt(n1); i = i + 2) {
     // While i divides n, print i and divide n
 
-    count  = 0;
+    count = 0;
     while (n1 % i == 0) {
       n1 = n1 / i;
       count += 1;
@@ -77,7 +80,7 @@ bool is_square2(const cpp_int& n) {
 //  return count % 2 == 0;
 //}
 
-void process_result(const std::string& i, const std::string& j, const Fraction& val_i, const Fraction& val_j) {
+void process_result(const std::string &i, const std::string &j, const Fraction &val_i, const Fraction &val_j) {
   Fraction product = val_i * val_j;
 
   auto numMod = product.numerator % 10;
@@ -94,21 +97,20 @@ void process_result(const std::string& i, const std::string& j, const Fraction& 
 //  if (isEvenFactors(product.numerator, 2) || isEvenFactors(product.denominator, 2)) {
 //    return;
 //  }
-
-  if (product.numerator % 4 == 2 || product.denominator % 4 == 2) {
-    return;
-  }
-
-  if (product.numerator % 4 == 3 || product.denominator % 4 == 3) {
-    return;
-  }
+//  if (product.numerator % 4 == 2 || product.denominator % 4 == 2) {
+//    return;
+//  }
+//
+//  if (product.numerator % 4 == 3 || product.denominator % 4 == 3) {
+//    return;
+//  }
 
 
   if (is_square(product.numerator) && is_square(product.denominator)) {
     std::cout << "Square Free" << std::endl;
     std::cout << i << ", " << j << std::endl;
     std::cout << val_i.numerator << "/" << val_i.denominator << ", "
-         << val_j.numerator << "/" << val_j.denominator << std::endl;
+              << val_j.numerator << "/" << val_j.denominator << std::endl;
     std::cout << product.numerator << "/" << product.denominator << std::endl;
     // Log info here
   }
@@ -122,7 +124,6 @@ void show_progress(size_t current, size_t total, std::chrono::steady_clock::time
   // Calculate elapsed time
   auto current_time = std::chrono::steady_clock::now();
   auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
-
 
 
   std::cout << "[";
@@ -142,15 +143,15 @@ void show_progress(size_t current, size_t total, std::chrono::steady_clock::time
 
   // Display estimated time remaining and time to complete
   if (current > 0) {
-    std::cout << " ETA: " << elapsed_time/progress << "s";
-    std::cout << " Elapsed: " << elapsed_time << "s" ;
+    std::cout << " ETA: " << elapsed_time / progress << "s";
+    std::cout << " Elapsed: " << elapsed_time << "s";
   }
 
   std::cout << "\r";
   std::cout.flush();
 }
 
-vector<string> split(const string& str, const string& delim) {
+vector<string> split(const string &str, const string &delim) {
   vector<string> tokens;
   boost::split(tokens, str, boost::is_any_of(delim));
   return tokens;
@@ -160,74 +161,256 @@ vector<string> split(const string& str, const string& delim) {
 // 1000 = 303791
 
 
+template <typename T>
+double VectorMemoryUsage(const std::vector<T>& vec) {
+  size_t size_of_elements = vec.size() * sizeof(T);
+  size_t size_of_vector_object = sizeof(vec);
+  // Total estimated memory usage
+  auto size = size_of_vector_object + size_of_elements;
+
+  return size / 1000000000.0;
+}
+
+
+template <typename T>
+double MapMemoryUsage(const std::map<std::string, std::vector<T>>& map) {
+  size_t size_of_elements = 0;
+  for (auto it = map.begin(); it != map.end(); ++it) {
+    size_of_elements += it->second.size() * sizeof(T);
+  }
+
+  size_t size_of_map_object = sizeof(map);
+  // Total estimated memory usage
+  auto out =size_of_map_object + size_of_elements;
+//  convert to gb
+  return out / 1000000000.0;
+}
+
+
 int main() {
-  string filename = "../Numbers/NumberAndOut150.log";
+  string filename = "../Numbers/NumberAndOut10_000.log";
   ifstream file(filename);
-  string line;
 
-//  size_t total_lines = 3002;
-  size_t total_lines = 6817;
-//  size_t total_lines = 303791;
 
-  total_lines = total_lines * (total_lines + 1) / 2;
 
   if (!file.is_open()) {
     cerr << "Error opening file." << endl;
     return 1;
   }
 
-  // Start timing
-  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-
-  int line_count = 0;
-
+  auto start_time = std::chrono::high_resolution_clock::now();
+  std::vector<Fraction> fractions;
+  string line;
   while (getline(file, line)) {
     vector<string> split_line1 = split(line, ",");
-
     Fraction frac1(split_line1[1]); // Assuming the fractions are integers
-
-    ifstream file2(filename);
-    string line2;
-    while (getline(file2, line2)) {
-      if (line == line2) {
-        break;
-      }
-
-      vector<string> split_line2 = split(line2, ",");
-      Fraction frac2(split_line2[1]); // Assuming the fractions are integers
-
-      if (((frac1.numerator & 1) ^ (frac2.numerator & 1)) || ((frac1.denominator & 1) ^ (frac2.denominator & 1))){
-        continue;
-      }
-
-
-
-
-      try {
-        process_result(split_line1[0], split_line2[0], frac1, frac2);
-      } catch (std::invalid_argument& e) {
-          std::cout << "Invalid Argument" << std::endl;
-          std::cout << split_line1[0] <<  split_line2[0] << frac1.toString() <<  frac2.toString() << std::endl;
-      }
-
-    }
-
-    line_count += 1;
-//    if (line_count % 150 == 0) {
-      size_t tempCount = line_count * (line_count + 1) / 2;
-      show_progress(tempCount, total_lines, start);
-//    }
-
-    file2.close();
+    fractions.emplace_back(frac1);
   }
 
-  // End timing
-  std::chrono::steady_clock::time_point stop = std::chrono::steady_clock::now();
-  auto duration = duration_cast<seconds>(stop - start);
-  cout << duration.count() << " seconds" << endl;
+  std::cout << "Size of map: " << VectorMemoryUsage(fractions) << std::endl;
+  std::cout << "len" << fractions.size() << std::endl;
 
-  return 0;
+  auto end_time = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
+  std::cout << "Time taken to read in file " << duration.count() << " seconds" << std::endl;
+
+  std::map<std::string, std::vector<Fraction *>> fractionSignMap;
+
+  for (size_t i = 0; i < fractions.size(); i++) {
+    std::string key = fractions[i].toBitString();
+
+    if (fractionSignMap.find(key) == fractionSignMap.end()) {
+      fractionSignMap[key] = std::vector<Fraction *>();
+    }
+    else{
+      fractionSignMap[key].push_back(&fractions[i]);
+    }
+
+    fractionSignMap[key].push_back(&fractions[i]);
+  }
+
+
+  double averageSize = 0;
+  double maxSize = 0;
+  double minSize = 10000;
+
+  std::string maxSign = "";
+
+  size_t numberOfOnes = 0;
+  std::vector<std::map<std::string, std::vector<Fraction*>>::iterator> toDelete;
+
+
+  for (auto it = fractionSignMap.begin(); it != fractionSignMap.end(); ++it) {
+      averageSize += it->second.size();
+//      maxSize = std::max(maxSize, (double)it->second.size());
+//      minSize = std::min(minSize, (double)it->second.size());
+
+      if (it->second.size() > maxSize) {
+          maxSize = it->second.size();
+          maxSign = it->first;
+      }
+
+      if (it->second.size() < minSize) {
+          minSize = it->second.size();
+      }
+
+      if (it->second.size() == 1) {
+          numberOfOnes += 1;
+          toDelete.push_back(it);
+      }
+  }
+  std::cout << "len of map: " << fractionSignMap.size() << std::endl;
+  std::cout << "averageSize: " << averageSize / fractionSignMap.size() << std::endl;
+  std::cout << "maxSize: " << maxSize <<  " " << maxSign << std::endl;
+
+  std::cout << "minSize: " << minSize << std::endl;
+
+
+  for (auto it = toDelete.begin(); it != toDelete.end(); ++it) {
+      fractionSignMap.erase(*it);
+  }
+  std::cout << "----------- ----------- -----------" << std::endl;
+
+  end_time = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
+  std::cout << "Time taken to read in file " << duration.count() << " seconds" << std::endl;
+
+  averageSize = 0;
+
+  std::priority_queue<int, std::vector<int>, std::greater<int>> minHeap;
+
+  for (auto it = fractionSignMap.begin(); it != fractionSignMap.end(); ++it) {
+      averageSize += it->second.size();
+
+//      minHeap.push(it->second.size());
+//
+//      if (minHeap.size() > 150) {
+//        minHeap.pop();
+//      }
+  }
+
+  std::cout << "averageSize: " << averageSize / fractionSignMap.size() << std::endl;
+  std::cout << "len of map: " << fractionSignMap.size() << std::endl;
+  std::cout << "numberOfOnes: " << numberOfOnes << std::endl;
+
+
+  auto out = MapMemoryUsage(fractionSignMap);
+  std::cout << "Size of map: " << out << std::endl;
+
+//  size_t len_of_queue = minHeap.size();
+//  for (size_t i = 0; i < len_of_queue; ++i) {
+//    std::cout << minHeap.top() << std::endl;
+//    minHeap.pop();
+//  }
+
+  end_time = std::chrono::high_resolution_clock::now();
+  duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
+  std::cout << "Time taken to read in file " << duration.count() << " seconds" << std::endl;
+
+
+  size_t total_lines = fractionSignMap.size() * (fractionSignMap.size() + 1) / 2;
+  size_t count = 0;
+  start_time = std::chrono::steady_clock::now();
+  for(auto it = fractionSignMap.begin(); it != fractionSignMap.end(); ++it) {
+    for (size_t i = 0; i < it->second.size(); ++i) {
+      for (size_t j = 0; j < it->second.size(); ++j) {
+        if(*it->second[i] == *it->second[j]){
+          break;
+        }
+
+
+        process_result(std::to_string(i), std::to_string(j), *it->second[i], *it->second[j]);
+      }
+    }
+    count += 1;
+    size_t tempCount = count * (count + 1) / 2;
+    show_progress(tempCount, total_lines, start_time);
+  }
+
+
+
+
+//  std::cout << "Size of vector: " << VectorMemoryUsage(fractions) << std::endl;
+//  std::cout << "len" << fractions.size() << std::endl;
+//
+//
+//  for (size_t i = 0; i < 10 ; i++) {
+//    std::cout << fractions[i].toString() << std::endl;
+//  }
+//
+
+
+
 }
+
+//int main() {
+//  string filename = "../Numbers/NumberAndOut150.log";
+//  ifstream file(filename);
+//  string line;
+//
+////  size_t total_lines = 3002;
+//  size_t total_lines = 6817;
+////  size_t total_lines = 303791;
+//
+//  total_lines = total_lines * (total_lines + 1) / 2;
+//
+//  if (!file.is_open()) {
+//    cerr << "Error opening file." << endl;
+//    return 1;
+//  }
+//
+//  // Start timing
+//  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+//
+//  int line_count = 0;
+//
+//  while (getline(file, line)) {
+//    vector<string> split_line1 = split(line, ",");
+//
+//    Fraction frac1(split_line1[1]); // Assuming the fractions are integers
+//
+//    ifstream file2(filename);
+//    string line2;
+//    while (getline(file2, line2)) {
+//      if (line == line2) {
+//        break;
+//      }
+//
+//      vector<string> split_line2 = split(line2, ",");
+//      Fraction frac2(split_line2[1]); // Assuming the fractions are integers
+//
+//      if (((frac1.numerator & 1) ^ (frac2.numerator & 1)) || ((frac1.denominator & 1) ^ (frac2.denominator & 1))){
+//        continue;
+//      }
+//
+//
+//
+//
+//      try {
+//        process_result(split_line1[0], split_line2[0], frac1, frac2);
+//      } catch (std::invalid_argument& e) {
+//          std::cout << "Invalid Argument" << std::endl;
+//          std::cout << split_line1[0] <<  split_line2[0] << frac1.toString() <<  frac2.toString() << std::endl;
+//      }
+//
+//    }
+//
+//    line_count += 1;
+////    if (line_count % 150 == 0) {
+//      size_t tempCount = line_count * (line_count + 1) / 2;
+//      show_progress(tempCount, total_lines, start);
+////    }
+//
+//    file2.close();
+//  }
+//
+//  // End timing
+//  std::chrono::steady_clock::time_point stop = std::chrono::steady_clock::now();
+//  auto duration = duration_cast<seconds>(stop - start);
+//  cout << duration.count() << " seconds" << endl;
+//
+//  return 0;
+//}
 
 
 //#include <iostream>
