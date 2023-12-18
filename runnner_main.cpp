@@ -188,7 +188,7 @@ double MapMemoryUsage(const std::map<std::string, std::vector<T>>& map) {
 
 
 int main() {
-  string filename = "../Numbers/NumberAndOut10_000.log";
+  string filename = "../Numbers/NumberAndOut1000.log";
   ifstream file(filename);
 
 
