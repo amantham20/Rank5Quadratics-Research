@@ -10,13 +10,15 @@ set(CMAKE_CXX_STANDARD 20)
 
 
 # Runner Main executable
-add_executable(MathResearch2 runnner_main.cpp Fraction.hpp)
+add_executable(MathResearch2 runnner_main.cpp Fraction.hpp BloomFilter.hpp Logger.hpp)
 target_link_libraries(MathResearch2 PRIVATE Boost::boost)
 
 
-# Generator executable
-add_executable(MathResearch2_Generator generator_main.cpp Fraction.hpp)
-target_link_libraries(MathResearch2_Generator PRIVATE Boost::boost)
+# Generator Bloom Filter executable
+add_executable(MathResearch2_Generator_bf generator_bf_main.cpp Fraction.hpp BloomFilter.hpp Logger.hpp)
+target_link_libraries(MathResearch2_Generator_bf PRIVATE Boost::boost)
+
+
 
 # Test executable
 add_executable(MathResearch2_Tests tests/test1.cpp Fraction.hpp tests/FractionTest.cpp tests/BitsetTest.cpp)

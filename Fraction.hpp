@@ -17,18 +17,29 @@
 
 #include <boost/math/common_factor.hpp>
 
+
+
+
 using namespace boost::multiprecision;
 
-struct Fraction{
-  int1024_t numerator;
-  int1024_t denominator;
+#define BIG_INT int512_t
 
-  static constexpr size_t NUMOFBITS = 970;
+struct Fraction{
+//  int1024_t numerator;
+//  int1024_t denominator;
+
+  BIG_INT numerator;
+  BIG_INT denominator;
+
+  static constexpr size_t NUMOFBITS = 1950;
 
 //  std::bitset<NUMOFBITS> numSign;
 //  std::bitset<NUMOFBITS> denSign;
 
   std::bitset<NUMOFBITS> FracSign;
+
+
+
 
 
     std::string removeLeadingSpaces(std::string str) {
@@ -62,13 +73,13 @@ struct Fraction{
     denominatorStr = removeLeadingSpaces(denominatorStr);
 
     // Converting to integers
-    int512_t num = int512_t(numeratorStr);
-    int512_t den = int512_t(denominatorStr);
+    BIG_INT num = BIG_INT(numeratorStr);
+    BIG_INT den = BIG_INT(denominatorStr);
 
     if (den == 0) {
       throw std::invalid_argument("Denominator cannot be zero.");
     }
-    int512_t gcd = boost::math::gcd(num, den);
+    BIG_INT gcd = boost::math::gcd(num, den);
     numerator = num / gcd;
     denominator = den / gcd;
 
@@ -78,8 +89,8 @@ struct Fraction{
     }
 
 
-    int512_t num_t = numerator;
-    int512_t den_t = denominator;
+    BIG_INT num_t = numerator;
+    BIG_INT den_t = denominator;
 
     if (NUMOFBITS > PRIMES.size()){
       throw std::invalid_argument("NUMOFBITS is greater than the size of the PRIMES array.");
@@ -109,13 +120,13 @@ struct Fraction{
 
   }
 
-  Fraction(int512_t num, int512_t den) : numerator(num), denominator(den)
+  Fraction(BIG_INT num, BIG_INT den) : numerator(num), denominator(den)
   {
 
     if (den == 0) {
       throw std::invalid_argument("Denominator cannot be zero.");
     }
-    int512_t gcd = boost::math::gcd(num, den);
+    BIG_INT gcd = boost::math::gcd(num, den);
     numerator /= gcd;
     denominator /= gcd;
 
@@ -124,14 +135,81 @@ struct Fraction{
       numerator *= -1;
       denominator *= -1;
     }
+
+
+  }
+
+
+  void setBitSet(){
+
+    BIG_INT num_t = numerator;
+    BIG_INT den_t = denominator;
+
+    if (NUMOFBITS > PRIMES.size()){
+      throw std::invalid_argument("NUMOFBITS is greater than the size of the PRIMES array.");
+    }
+
+    for (size_t i = 0; i < NUMOFBITS; i++) {
+      bool numBit = false;
+
+      while (num_t != 0 && num_t % PRIMES[i] == 0) {
+        num_t /= PRIMES[i];
+        numBit = !numBit;
+
+      }
+
+      bool denBit = false;
+      while (den_t % PRIMES[i] == 0) {
+        den_t /= PRIMES[i];
+        denBit = !denBit;
+      }
+      FracSign[i] = denBit || numBit;
+
+      if (num_t == 1 && den_t == 1) {
+        break;
+      }
+
+    }
   }
 
   Fraction operator*(const Fraction& other) const {
-    int512_t new_numerator = numerator * other.numerator;
-    int512_t new_denominator = denominator * other.denominator;
+    BIG_INT new_numerator = numerator * other.numerator;
+    BIG_INT new_denominator = denominator * other.denominator;
 
     return Fraction(new_numerator, new_denominator);
   }
+
+  Fraction operator*(const BIG_INT& other) const {
+    return Fraction(numerator * other, denominator);
+  }
+
+  Fraction operator*(const int& other) const {
+    return Fraction(numerator * other, denominator);
+  }
+
+    Fraction operator-(int scalar) const {
+      // Assuming scalar is subtracted from the numerator
+      // This is a simplistic implementation, you might need to handle reduction of fraction
+      return Fraction(numerator - (denominator * scalar), denominator);
+    }
+
+    Fraction operator+(int scalar) const {
+      // Assuming scalar is subtracted from the numerator
+      // This is a simplistic implementation, you might need to handle reduction of fraction
+      return Fraction(numerator + (denominator * scalar), denominator);
+    }
+
+    Fraction operator+(const Fraction& other) const {
+      // Assuming scalar is subtracted from the numerator
+      // This is a simplistic implementation, you might need to handle reduction of fraction
+      return Fraction(numerator * other.denominator + (denominator * other.numerator), denominator * other.denominator);
+    }
+
+    Fraction operator-(const Fraction& other) const {
+      // Assuming scalar is subtracted from the numerator
+      // This is a simplistic implementation, you might need to handle reduction of fraction
+      return Fraction(numerator * other.denominator - (denominator * other.numerator), denominator * other.denominator);
+    }
 
 
   void operator<<(std::ostream& os) const {
@@ -149,6 +227,18 @@ struct Fraction{
 
   bool operator==(const Fraction& other) const {
     return numerator == other.numerator && denominator == other.denominator;
+  }
+
+  bool operator==(const int& other) const {
+    return numerator == other && denominator == 1;
+  }
+
+  bool operator!=(const Fraction& other) const {
+    return numerator != other.numerator || denominator != other.denominator;
+  }
+
+  bool operator!=(const int& other) const {
+    return numerator != other || denominator != 1;
   }
 
 
@@ -352,6 +442,16 @@ struct Fraction{
   ,17099,17107,17117,17123,17137,17159,17167,17183,17189,17191
   ,17203,17207,17209,17231,17239,17257,17291,17293,17299,17317
   ,17321,17327,17333,17341,17351,17359,17377,17383,17387,17389};
+};
+
+Fraction operator*(int scalar, const Fraction& fraction) {
+  return fraction * scalar;
+}
+
+
+
+
+
 
 //constexpr const static std::array<int, 1000> PRIMES{2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, \
 //                109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, \
@@ -408,7 +508,6 @@ struct Fraction{
 //                                                7673, 7681, 7687, 7691, 7699, 7703, 7717, 7723, 7727, 7741, 7753, 7757, 7759, 7789, 7793, 7817, 7823, 7829,
 //                                                7841, 7853, 7867, 7873, 7877, 7879, 7883, 7901, 7907, 7919};
 
-};
 
 //struct Fraction {
 //    __int128_t numerator;
