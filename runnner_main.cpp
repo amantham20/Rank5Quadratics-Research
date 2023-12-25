@@ -94,17 +94,6 @@ void process_result(const std::string &i, const std::string &j, const Fraction &
     return;
   }
 
-//  if (isEvenFactors(product.numerator, 2) || isEvenFactors(product.denominator, 2)) {
-//    return;
-//  }
-//  if (product.numerator % 4 == 2 || product.denominator % 4 == 2) {
-//    return;
-//  }
-//
-//  if (product.numerator % 4 == 3 || product.denominator % 4 == 3) {
-//    return;
-//  }
-
 
   if (is_square(product.numerator) && is_square(product.denominator)) {
     std::cout << "Square Free" << std::endl;
