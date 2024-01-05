@@ -6,13 +6,14 @@
 #include <unordered_map>
 #include <map>
 #include <unordered_set>
+#include <set>
 #include <queue>
 
 #include "Fraction.hpp"
 #include "BloomFilter.hpp"
 #include "Logger.hpp"
 
-#include <omp.h>
+//#include <omp.h>
 
 Fraction func(Fraction x) {
 //  return  (2*x-1)*(4*(x*x)-2*x-1);
@@ -82,7 +83,7 @@ void analysis() {
 
   const auto start_time = std::chrono::high_resolution_clock::now();
 
-#pragma omp parallel for collapse(2) shared(results)
+//#pragma omp parallel for collapse(2) shared(results)
   for (int i = PRODUCTIONS_LOWERBOUND; i < PRODUCTIONS_UPPERBOUND; ++i) {
     for (int j = i; j < PRODUCTIONS_UPPERBOUND; ++j) {
       Fraction frac(i, j);
@@ -202,17 +203,23 @@ void analysis() {
 
 void checker(int bucket_size = 0) {
 
-  std::unordered_map<std::string, std::unordered_set<std::string>> results;
+  std::map<std::string, std::set<std::string>> results;
+
 
   //  2_filter.csv
-  std::ifstream file("10_INF_filter.csv");
+  const std::string fileName = "4_filter.csv";
+//  const std::string fileName = "5_10_filter.csv";
+//  const std::string fileName = "10_INF_filter.csv";
+
+  std::ifstream file(fileName);
 
   std::string line;
   while (std::getline(file, line)) {
-    results[line] = std::unordered_set < std::string > ();
+    results[line] = std::set < std::string > ();
   }
 
-  std::cout << "Completed Loading Data" << std::endl;
+
+  std::cout << "Completed Loading Data from " << fileName << std::endl;
 
 
   auto start_time = std::chrono::high_resolution_clock::now();
@@ -239,25 +246,25 @@ void checker(int bucket_size = 0) {
       if (results.find(out_bit_str) != results.end()) {
         results[out_bit_str].insert(frac.toString());
 
-        if (bucket_size > 1 && results[out_bit_str].size() == bucket_size) {
-
-          for (const auto &frac_i: results[out_bit_str]) {
-            for (const auto &frac_j: results[out_bit_str]) {
-              if (frac_i == frac_j) {
-                break;
-              }
-              Fraction val_i(frac_i);
-              Fraction val_j(frac_j);
-
-              Fraction out_i = func(val_i);
-              Fraction out_j = func(val_j);
-              process_result(frac_i, frac_j, out_i, out_j);
-            }
-          }
-
-          results.erase(out_bit_str);
-
-        }
+//        if (bucket_size > 1 && results[out_bit_str].size() == bucket_size) {
+//
+//          for (const auto &frac_i: results[out_bit_str]) {
+//            for (const auto &frac_j: results[out_bit_str]) {
+//              if (frac_i == frac_j) {
+//                break;
+//              }
+//              Fraction val_i(frac_i);
+//              Fraction val_j(frac_j);
+//
+//              Fraction out_i = func(val_i);
+//              Fraction out_j = func(val_j);
+//              process_result(frac_i, frac_j, out_i, out_j);
+//            }
+//          }
+//
+//          results.erase(out_bit_str);
+//
+//        }
       }
     }
 
@@ -286,6 +293,10 @@ void checker(int bucket_size = 0) {
   std::cout << "Residual units" << std::endl;
   std::cout << "Count: " << results.size() << std::endl;
 
+  const size_t result_len = results.size();
+  const size_t result_percent_unit = result_len / 100;
+
+
   // for bigger groups bigger units
   auto counter  = 0;
   for (const auto &result: results) {
@@ -304,11 +315,11 @@ void checker(int bucket_size = 0) {
       }
     }
     counter++;
-    if (counter % 100 == 0) {
-      std::cout << "Done with " << counter << " iterations\n";
+    if (counter % result_percent_unit == 0) {
+        std::cout << "percent done" << counter / result_percent_unit << "%";
     }
-  }
 
+  }
 
 }
 
@@ -316,6 +327,7 @@ void checker(int bucket_size = 0) {
 void filter() {
 
   std::unordered_map<std::string, size_t> results;
+
 
   std::ifstream file("bloom_filter.csv");
   std::string line;
