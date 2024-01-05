@@ -337,26 +337,30 @@ void checker(int bucket_size = 0) {
   for (const auto &result: results) {
     if (threads.size() >= maxThreads) {
       // Wait for one of the existing threads to finish
-      int i = 0;
-      while (true) {
+//      threads.front().join();
+//      threads.erase(threads.begin());
+      for (size_t i = 0; i < threads.size(); ++i) {
         if (threads[i].joinable()) {
           threads[i].join();
           threads.erase(threads.begin() + i);
-          threads.emplace_back(std::thread(process, result));
-
           break;
         }
-        i = (i + 1) % threads.size();
       }
-
       threadsComplete++;
-
-      if (threadsComplete % result_percent_unit == 0) {
-        std::cout << "Percent complete " << (threadsComplete / static_cast<double>(result_len)) * 100 << "%" << std::endl;
-      }
     }
     // Launch a new thread
     threads.emplace_back(std::thread(process, result));
+
+    if (threadsComplete % result_percent_unit == 0) {
+      std::cout << "Percent complete " << (threadsComplete / static_cast<double>(result_len)) * 100 << "%" << std::endl;
+    }
+  }
+
+  // Join any remaining threads
+  for (auto &th : threads) {
+    if (th.joinable()) {
+      th.join();
+    }
   }
 
   // Join any remaining threads
