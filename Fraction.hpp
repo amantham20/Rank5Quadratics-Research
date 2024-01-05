@@ -31,7 +31,7 @@ struct Fraction{
   BIG_INT numerator;
   BIG_INT denominator;
 
-  static constexpr size_t NUMOFBITS = 1950;
+  static constexpr size_t NUMOFBITS = 50;
 
 //  std::bitset<NUMOFBITS> numSign;
 //  std::bitset<NUMOFBITS> denSign;

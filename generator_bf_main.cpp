@@ -8,12 +8,14 @@
 #include <unordered_set>
 #include <set>
 #include <queue>
+#include <omp.h>
 
 #include "Fraction.hpp"
 #include "BloomFilter.hpp"
 #include "Logger.hpp"
 
-//#include <omp.h>
+#include <thread>
+#include <future>
 
 Fraction func(Fraction x) {
 //  return  (2*x-1)*(4*(x*x)-2*x-1);
@@ -25,7 +27,7 @@ Fraction func(Fraction x) {
 //  return  x*(x-1)*(x**3-8*x**2+5*x+1)
 
 const int PRODUCTIONS_LOWERBOUND = 1; // Define these bounds
-const int PRODUCTIONS_UPPERBOUND = 35000; // Define these bounds
+const int PRODUCTIONS_UPPERBOUND = 1500; // Define these bounds
 
 
 bool is_square(const cpp_int &n) {
@@ -201,25 +203,44 @@ void analysis() {
 }
 
 
+void process(const std::pair<std::string, std::set<std::string>> &result) {
+  auto out_bit_str = result.first;
+  for (const auto &frac_i: result.second) {
+    for (const auto &frac_j: result.second) {
+      if (frac_i == frac_j) {
+        break;
+      }
+      Fraction val_i(frac_i);
+      Fraction val_j(frac_j);
+
+      Fraction out_i = func(val_i);
+      Fraction out_j = func(val_j);
+      process_result(frac_i, frac_j, out_i, out_j);
+    }
+  }
+
+}
+
+
 void checker(int bucket_size = 0) {
 
   std::map<std::string, std::set<std::string>> results;
 
 
-  //  2_filter.csv
-  const std::string fileName = "4_filter.csv";
-//  const std::string fileName = "5_10_filter.csv";
-//  const std::string fileName = "10_INF_filter.csv";
-
-  std::ifstream file(fileName);
-
-  std::string line;
-  while (std::getline(file, line)) {
-    results[line] = std::set < std::string > ();
-  }
-
-
-  std::cout << "Completed Loading Data from " << fileName << std::endl;
+//  //  2_filter.csv
+//  const std::string fileName = "4_filter.csv";
+////  const std::string fileName = "5_10_filter.csv";
+////  const std::string fileName = "10_INF_filter.csv";
+//
+//  std::ifstream file(fileName);
+//
+//  std::string line;
+//  while (std::getline(file, line)) {
+//    results[line] = std::set < std::string > ();
+//  }
+//
+//
+//  std::cout << "Completed Loading Data from " << fileName << std::endl;
 
 
   auto start_time = std::chrono::high_resolution_clock::now();
@@ -243,8 +264,12 @@ void checker(int bucket_size = 0) {
         continue;
       }
 
-      if (results.find(out_bit_str) != results.end()) {
+//      if (results.find(out_bit_str) != results.end()) {
         results[out_bit_str].insert(frac.toString());
+
+//        if (results[out_bit_str].size() > 2) {
+//          results.erase(out_bit_str);
+//        }
 
 //        if (bucket_size > 1 && results[out_bit_str].size() == bucket_size) {
 //
@@ -265,7 +290,7 @@ void checker(int bucket_size = 0) {
 //          results.erase(out_bit_str);
 //
 //        }
-      }
+//      }
     }
 
     if (i % static_cast<int>(std::floor(PRODUCTIONS_UPPERBOUND / 100.0)) == 0) {
@@ -287,6 +312,14 @@ void checker(int bucket_size = 0) {
     }
   }
 
+//  erase all buckets with size 1
+  for (auto it = results.begin(); it != results.end();) {
+    if (it->second.size() == 1) {
+      it = results.erase(it);
+    } else {
+      ++it;
+    }
+  }
 
 // resudial units
 
@@ -297,31 +330,50 @@ void checker(int bucket_size = 0) {
   const size_t result_percent_unit = result_len / 100;
 
 
-  // for bigger groups bigger units
-  auto counter  = 0;
+  std::vector<std::thread> threads;
+  const size_t maxThreads = 10; // Maximum number of threads you want to allow.
+  size_t threadsComplete = 0;
+
   for (const auto &result: results) {
-    auto out_bit_str = result.first;
-    for (const auto &frac_i: results[out_bit_str]) {
-      for (const auto &frac_j: results[out_bit_str]) {
-        if (frac_i == frac_j) {
+    if (threads.size() >= maxThreads) {
+      // Wait for one of the existing threads to finish
+      int i = 0;
+      while (true) {
+        if (threads[i].joinable()) {
+          threads[i].join();
+          threads.erase(threads.begin() + i);
+          threads.emplace_back(std::thread(process, result));
+
           break;
         }
-        Fraction val_i(frac_i);
-        Fraction val_j(frac_j);
+        i = (i + 1) % threads.size();
+      }
 
-        Fraction out_i = func(val_i);
-        Fraction out_j = func(val_j);
-        process_result(frac_i, frac_j, out_i, out_j);
+      threadsComplete++;
+
+      if (threadsComplete % result_percent_unit == 0) {
+        std::cout << "Percent complete " << (threadsComplete / static_cast<double>(result_len)) * 100 << "%" << std::endl;
       }
     }
-    counter++;
-    if (counter % result_percent_unit == 0) {
-        std::cout << "percent done" << counter / result_percent_unit << "%";
-    }
-
+    // Launch a new thread
+    threads.emplace_back(std::thread(process, result));
   }
 
+  // Join any remaining threads
+  for (auto &th : threads) {
+    if (th.joinable()) {
+      th.join();
+    }
+  }
+
+  auto curr_time = std::chrono::high_resolution_clock::now();
+  auto time_elapsed = std::chrono::duration_cast<std::chrono::seconds>(curr_time - start_time).count();
+  std::cout << "Time elapsed: " << time_elapsed << " seconds\n";
+
 }
+
+
+
 
 
 void filter() {

@@ -9,6 +9,9 @@ set(CMAKE_CXX_STANDARD 20)
 #add_subdirectory(third_party/Catch2)
 #set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++")
 
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+
 # Runner Main executable
 add_executable(MathResearch2 runnner_main.cpp Fraction.hpp BloomFilter.hpp Logger.hpp)
 target_link_libraries(MathResearch2 PRIVATE Boost::boost)
