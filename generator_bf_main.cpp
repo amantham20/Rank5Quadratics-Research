@@ -9,9 +9,13 @@
 #include <set>
 #include <queue>
 
+#include <chrono>
+#include <thread>
+
 #include "Fraction.hpp"
 #include "BloomFilter.hpp"
 #include "Logger.hpp"
+
 
 //#include <omp.h>
 
@@ -201,13 +205,32 @@ void analysis() {
 }
 
 
+void process(const std::pair<std::string, std::set<std::string>> &result) {
+  auto out_bit_str = result.first;
+  for (const auto &frac_i: result.second) {
+    for (const auto &frac_j: result.second) {
+      if (frac_i == frac_j) {
+        break;
+      }
+      Fraction val_i(frac_i);
+      Fraction val_j(frac_j);
+
+      Fraction out_i = func(val_i);
+      Fraction out_j = func(val_j);
+      process_result(frac_i, frac_j, out_i, out_j);
+    }
+  }
+
+}
+
+
 void checker(int bucket_size = 0) {
 
   std::map<std::string, std::set<std::string>> results;
 
 
   //  2_filter.csv
-  const std::string fileName = "4_filter.csv";
+  const std::string fileName = "2_filter.csv";
 //  const std::string fileName = "5_10_filter.csv";
 //  const std::string fileName = "10_INF_filter.csv";
 
@@ -298,27 +321,26 @@ void checker(int bucket_size = 0) {
 
 
   // for bigger groups bigger units
-  auto counter  = 0;
+  std::vector<std::thread> threads;
+  const size_t maxThreads = 20; // Maximum number of threads you want to allow.
+  size_t threadsComplete = 0;
+
   for (const auto &result: results) {
-    auto out_bit_str = result.first;
-    for (const auto &frac_i: results[out_bit_str]) {
-      for (const auto &frac_j: results[out_bit_str]) {
-        if (frac_i == frac_j) {
-          break;
-        }
-        Fraction val_i(frac_i);
-        Fraction val_j(frac_j);
-
-        Fraction out_i = func(val_i);
-        Fraction out_j = func(val_j);
-        process_result(frac_i, frac_j, out_i, out_j);
-      }
+    if (threads.size() >= maxThreads) {
+      // Wait for one of the existing threads to finish
+      threads.front().join();
+      threads.erase(threads.begin());
+      threadsComplete++;
     }
-    counter++;
-    if (counter % result_percent_unit == 0) {
-        std::cout << "percent done" << counter / result_percent_unit << "%";
-    }
+    // Launch a new thread
+    threads.emplace_back(std::thread(process, result));
+  }
 
+  // Join any remaining threads
+  for (auto &th : threads) {
+    if (th.joinable()) {
+      th.join();
+    }
   }
 
 }
