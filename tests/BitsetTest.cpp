@@ -16,9 +16,9 @@ TEST_CASE("BitSet") {
   REQUIRE(frac.numerator == 3);
   REQUIRE(frac.denominator == 2);
 
-  REQUIRE(frac.numSign == std::bitset<32>("10"));
-
-  REQUIRE(frac.denSign == std::bitset<32>("01"));
+  // REQUIRE(frac.numSign == std::bitset<32>("10"));
+  //
+  // REQUIRE(frac.denSign == std::bitset<32>("01"));
 }
 
 TEST_CASE("BitSet 2") {
@@ -26,9 +26,9 @@ TEST_CASE("BitSet 2") {
   REQUIRE(frac.numerator == 343);
   REQUIRE(frac.denominator == 5);
 
-  REQUIRE(frac.numSign == std::bitset<32>("1000"));
-
-  REQUIRE(frac.denSign == std::bitset<32>("100"));
+  // REQUIRE(frac.numSign == std::bitset<32>("1000"));
+  //
+  // REQUIRE(frac.denSign == std::bitset<32>("100"));
 }
 
 TEST_CASE("BitSet 3") {

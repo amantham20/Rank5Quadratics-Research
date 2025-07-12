@@ -636,7 +636,7 @@ void generator()
 
     // long long int count = 0;
 
-#pragma omp parallel for  collapse(2) schedule(dynamic)
+#pragma omp parallel for // collapse(2) schedule(dynamic)
     for (int i = PRODUCTIONS_LOWERBOUND; i < PRODUCTIONS_UPPERBOUND; ++i)
     {
         for (int j = i; j < PRODUCTIONS_UPPERBOUND; ++j)
