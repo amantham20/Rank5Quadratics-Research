@@ -444,9 +444,9 @@ struct Fraction{
   ,17321,17327,17333,17341,17351,17359,17377,17383,17387,17389};
 };
 
-Fraction operator*(int scalar, const Fraction& fraction) {
-  return fraction * scalar;
-}
+// Fraction operator*(int scalar, const Fraction& fraction) {
+//   return fraction * scalar;
+// }
 
 
 
