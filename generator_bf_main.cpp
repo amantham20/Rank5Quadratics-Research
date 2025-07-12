@@ -16,6 +16,8 @@
 #include <thread>
 #include <future>
 
+#define large_int long long int
+
 const int NPROC = std::thread::hardware_concurrency();
 // Number of threads to use, can be set to std::thread::hardware_concurrency() for max threads
 
@@ -529,12 +531,12 @@ void filter()
 // shared atomic counter
 std::atomic<int> completed{0};
 constexpr int t = PRODUCTIONS_UPPERBOUND - PRODUCTIONS_LOWERBOUND;
-constexpr int total = ((t * (t + 1)) / 2) ;
+constexpr large_int total = (static_cast<large_int>(t) * (t + 1)) / 2;
 
 void progress_monitor() {
     auto start = std::chrono::steady_clock::now();
     while (true) {
-        const int done = completed.load();
+        const large_int done = completed.load();
         if (done >= total) break;
         const double pct  = done * 100.0 / total;
         const double secs = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
