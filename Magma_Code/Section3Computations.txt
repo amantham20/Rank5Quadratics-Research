@@ -1,0 +1,133 @@
+//Computations in Magma verifying calculations in Section 3
+
+//Find solutions t,u,z for (2.3) where t,u have denominator bounded in absolute value by 100
+
+Q<x>:=PolynomialRing(Rationals());
+f:=(2*x-1)*(4*x^2-2*x-1);
+f2:=(2*x-1)^5*(4*x^2-2*x-1);
+values:=[];
+inputs:=[];
+tuztriples:=[];
+N:=100;
+for i in [-N..N] do
+for j in [1..N] do
+//Exclude disallowed values
+if GCD(i,j) eq 1 and i ne 0 and i/j ne 1/2 and i ne j then
+b:=i/j;
+a:=Evaluate(f,b);
+//Form unique integer modulo squares
+a:=Squarefree(Numerator(a))*Squarefree(Denominator(a));
+Append(~values,a);
+Append(~inputs,b);
+
+for k in [1..#values] do
+if a eq values[k] then
+c:=inputs[k];
+_,z:=IsSquare(Evaluate(f2,c)/Evaluate(f2,b));
+z0:=(8*c^6-32*c^5+40*c^4-20*c^3+4*c-1)/ (8*b^6-32*b^5+40*b^4-20*b^3+4*b-1);
+z1:= (8*b^6-32*b^5+40*b^4-20*b^3+4*b-1)/ (8*c^6-32*c^5+40*c^4-20*c^3+4*c-1);
+
+if z ne z0 then
+Append(~tuztriples,[b,c,z]);
+end if;
+
+if -z ne z0 then
+Append(~tuztriples,[b,c,-z]);
+end if;
+if 1/z ne z1 then
+Append(~tuztriples,[c,b,1/z]);
+end if;
+if -1/z ne z1 then
+Append(~tuztriples,[c,b,-1/z]);
+end if;
+end if;	
+end for;
+end if;
+end for;
+end for;
+
+//Number of distinct solutions
+#Set(tuztriples);
+
+//Now compute number of corresponding hyperelliptic curves with a rational Weierstrass point
+P<t,u,z>:= PolynomialRing(Rationals(),3);
+
+a:=2*(8*t^6*z - 32*t^5*z + 40*t^4*z - 20*t^3*z + 4*t*z - 8*u^6 + 32*u^5 - 40*u^4 + 20*u^3 - 4*u - z + 1);
+a0:=-64*t^5*(t-1)^5*(t^2-3*t+1);
+
+
+a4:=384*t^7*z^2 - 128*t^6*u^6*z + 512*t^6*u^5*z - 640*t^6*u^4*z + 320*t^6*u^3*z - 64*t^6*u*z - 1152*t^6*z^2 + 16*t^6*z
+ + 
+    512*t^5*u^6*z - 2048*t^5*u^5*z + 2560*t^5*u^4*z - 1280*t^5*u^3*z + 256*t^5*u*z + 1344*t^5*z^2 - 64*t^5*z
+		-
+    640*t^4*u^6*z + 2560*t^4*u^5*z - 3200*t^4*u^4*z + 1600*t^4*u^3*z - 320*t^4*u*z - 720*t^4*z^2 + 80*t^4*z
+		+
+    320*t^3*u^6*z - 1280*t^3*u^5*z + 1600*t^3*u^4*z - 800*t^3*u^3*z + 160*t^3*u*z + 120*t^3*z^2 - 40*t^3*z + 48*t^2*z^2
+    - 64*t*u^6*z + 256*t*u^5*z - 320*t*u^4*z + 160*t*u^3*z - 32*t*u*z - 24*t*z^2 + 8*t*z - 64*u^(12) + 512*u^(11)
+		-
+    1664*u^(10) + 2880*u^9 - 2880*u^8 + 1536*u^7 + 16*u^6*z- 128*u^6 - 64*u^5*z - 384*u^5 + 80*u^4*z
+		+ 240*u^4 -
+    40*u^3*z - 40*u^3 - 16*u^2 + 8*u*z + 8*u + 3*z^2 - 2*z - 1;
+
+a6:=z*(-128*t^7*z^2 + 384*t^6*z^2 - 448*t^5*z^2 + 240*t^4*z^2 - 40*t^3*z^2 - 16*t^2*z^2 + 8*t*z^2 + 64*u^(12) 
+- 512*u^(11) +
+    1664*u^(10) - 2880*u^9 + 2880*u^8 - 1536*u^7 + 128*u^6 + 384*u^5 - 240*u^4 + 40*u^3
+		+ 16*u^2 -
+    8*u - z^2 + 1);
+
+
+a2:=2*(32*t^(12)*z - 256*t^(11)*z + 832*t^(10)*z - 1440*t^9*z + 1440*t^8*z - 960*t^7*z + 64*t^6*u^6 - 256*t^6*u^5 
++    320*t^6*u^4 - 160*t^6*u^3 + 32*t^6*u + 640*t^6*z - 8*t^6 - 256*t^5*u^6 + 1024*t^5*u^5 - 1280*t^5*u^4 
++
+    640*t^5*u^3 - 128*t^5*u - 480*t^5*z + 32*t^5 + 320*t^4*u^6 - 1280*t^4*u^5 + 1600*t^4*u^4 - 800*t^4*u^3 
+		+
+    160*t^4*u + 240*t^4*z - 40*t^4 - 160*t^3*u^6 + 640*t^3*u^5 - 800*t^3*u^4 + 400*t^3*u^3 - 80*t^3*u - 40*t^3*z
+		+
+    20*t^3 - 16*t^2*z + 32*t*u^6 - 128*t*u^5 + 160*t*u^4 - 80*t*u^3 + 16*t*u + 8*t*z - 4*t - 8*u^6 + 32*u^5
+		-
+    40*u^4 + 20*u^3 - 4*u - z +1);
+
+hyper:=[];
+for triple in tuztriples do
+t0:=triple[1];
+u0:=triple[2];
+z0:=triple[3];
+
+aa:=Evaluate(a,[t0,u0,z0]);
+aa0:=Evaluate(a0, [t0,u0,z0]);
+aa2:=Evaluate(a2, [t0,u0,z0]);
+aa4:=Evaluate(a4, [t0,u0,z0]);
+aa6:=Evaluate(a6, [t0,u0,z0]);
+g:=aa*(aa6*x^6+aa4*x^4+aa2*x^2+aa0);
+//Check if there is a rational Weierstrass point
+if #Roots(g) gt 1 then
+C:=HyperellipticCurve(g);
+Append(~hyper,C);
+end if;
+end for;
+
+//The number of associated hyperelliptic curves with a rational Weierstrass point
+#hyper;
+
+//Now find a representative for each isomorphism class. This takes a few minutes.
+hyper2:=[];
+for i in [1..#hyper] do
+add:=true;
+for j in [1..#hyper2] do
+if IsIsomorphic(hyper[i],hyper2[j]) then
+add:=false;
+break j;
+end if;
+end for;
+if add then
+Append(~hyper2,hyper[i]);
+end if;
+end for;
+//This is the number of produced hyperelliptic curves up to isomorphism.
+#hyper2;
+//We verify that all 85 hyperelliptic curves have a rational Weierstrass point and the right torsion subgroup in the Jacobian
+
+[HasOddDegreeModel(C):C in hyper2];
+[Invariants(TorsionSubgroup(Jacobian(IntegralModel(C)))):C in hyper2];
+
+

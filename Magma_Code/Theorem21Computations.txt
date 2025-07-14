@@ -1,0 +1,100 @@
+//Computations in Magma for proving Theorem 2.1
+
+//Computation verifying that a(a6*x^6+a4*x^4+a2*x^2+a0) of Theorem 2.1 defines a separable sextic
+
+//Define a,a0,a2,a4,a6
+
+P<t,u,z>:= PolynomialRing(Rationals(),3);
+
+a:=2*(8*t^6*z - 32*t^5*z + 40*t^4*z - 20*t^3*z + 4*t*z - 8*u^6 + 32*u^5 - 40*u^4 + 20*u^3 - 4*u - z + 1);
+a0:=-64*t^5*(t-1)^5*(t^2-3*t+1);
+
+
+a4:=384*t^7*z^2 - 128*t^6*u^6*z + 512*t^6*u^5*z - 640*t^6*u^4*z + 320*t^6*u^3*z - 64*t^6*u*z - 1152*t^6*z^2 + 16*t^6*z
+ + 
+    512*t^5*u^6*z - 2048*t^5*u^5*z + 2560*t^5*u^4*z - 1280*t^5*u^3*z + 256*t^5*u*z + 1344*t^5*z^2 - 64*t^5*z
+		-
+    640*t^4*u^6*z + 2560*t^4*u^5*z - 3200*t^4*u^4*z + 1600*t^4*u^3*z - 320*t^4*u*z - 720*t^4*z^2 + 80*t^4*z
+		+
+    320*t^3*u^6*z - 1280*t^3*u^5*z + 1600*t^3*u^4*z - 800*t^3*u^3*z + 160*t^3*u*z + 120*t^3*z^2 - 40*t^3*z + 48*t^2*z^2
+    - 64*t*u^6*z + 256*t*u^5*z - 320*t*u^4*z + 160*t*u^3*z - 32*t*u*z - 24*t*z^2 + 8*t*z - 64*u^(12) + 512*u^(11)
+		-
+    1664*u^(10) + 2880*u^9 - 2880*u^8 + 1536*u^7 + 16*u^6*z- 128*u^6 - 64*u^5*z - 384*u^5 + 80*u^4*z
+		+ 240*u^4 -
+    40*u^3*z - 40*u^3 - 16*u^2 + 8*u*z + 8*u + 3*z^2 - 2*z - 1;
+
+a6:=z*(-128*t^7*z^2 + 384*t^6*z^2 - 448*t^5*z^2 + 240*t^4*z^2 - 40*t^3*z^2 - 16*t^2*z^2 + 8*t*z^2 + 64*u^(12) 
+- 512*u^(11) +
+    1664*u^(10) - 2880*u^9 + 2880*u^8 - 1536*u^7 + 128*u^6 + 384*u^5 - 240*u^4 + 40*u^3
+		+ 16*u^2 -
+    8*u - z^2 + 1);
+
+
+a2:=2*(32*t^(12)*z - 256*t^(11)*z + 832*t^(10)*z - 1440*t^9*z + 1440*t^8*z - 960*t^7*z + 64*t^6*u^6 - 256*t^6*u^5 
++    320*t^6*u^4 - 160*t^6*u^3 + 32*t^6*u + 640*t^6*z - 8*t^6 - 256*t^5*u^6 + 1024*t^5*u^5 - 1280*t^5*u^4 
++
+    640*t^5*u^3 - 128*t^5*u - 480*t^5*z + 32*t^5 + 320*t^4*u^6 - 1280*t^4*u^5 + 1600*t^4*u^4 - 800*t^4*u^3 
+		+
+    160*t^4*u + 240*t^4*z - 40*t^4 - 160*t^3*u^6 + 640*t^3*u^5 - 800*t^3*u^4 + 400*t^3*u^3 - 80*t^3*u - 40*t^3*z
+		+
+    20*t^3 - 16*t^2*z + 32*t*u^6 - 128*t*u^5 + 160*t*u^4 - 80*t*u^3 + 16*t*u + 8*t*z - 4*t - 8*u^6 + 32*u^5
+		-
+    40*u^4 + 20*u^3 - 4*u - z +1);
+
+// Polynomial coming from Equation 2.3
+h:=(2*t-1)^5*(4*t^2-2*t-1)*z^2-(2*u-1)^5*(4*u^2-2*u-1);
+//Following factorization shows that if a6=0 then t,u are in {0,1/2,1} or one is a root of 4x^2-2x-1 or x^2-3x+1
+Factorization(Resultant(P!(a6/z),h,z));
+
+//Now verify the claim that the irreducible factors of the discriminant of a6*x^6+a4*x^4+a2*x^2+a0 are contained in a,a6,t,t-1,2t-1,t^2-3t+1,4t^2-2t-1
+
+Q<x>:=PolynomialRing(P);
+f:= a6*x^6+a4*x^4+a2*x^2+a0;
+Factorization(Discriminant(f));
+//It follows that the sextic polynomial is separable
+
+
+//Now verify that E_t and E_{t’} are isomorphic
+
+Q<x>:=PolynomialRing(FieldOfFractions(P));
+
+f:=a*(a0*x^3+a2*x^2+a4*x+a6);
+//Normalize to a monic cubic and construct E_{t’}
+f2:=(a*a0)^2*Evaluate(f,x/(a*a0));
+E:=EllipticCurve(f2);
+
+//Construct E_t
+f:=x*(x^2-(2*t^2-2*t+1)*(4*t^4-12*t^3+6*t^2+2*t-1)*x+16*(t^2-3*t+1)*(t-1)^5*t^5);
+
+E2:=EllipticCurve(f);
+
+//Verify they are isomorphic
+IsIsomorphic(E,E2);
+
+//Now verify that E_u and E_{u’} are isomorphic
+
+f:=a*(a6*x^3+a4*x^2+a2*x+a0);
+//Normalize to a monic cubic and construct E_{u’}
+f2:=(a*a6)^2*Evaluate(f,x/(a*a6));
+E:=EllipticCurve(f2);
+E:=SimplifiedModel(E);
+
+f:=x*(x^2-(2*u^2-2*u+1)*(4*u^4-12*u^3+6*u^2+2*u-1)*x+16*(u^2-3*u+1)*(u-1)^5*u^5);
+E2:=SimplifiedModel(EllipticCurve(f));
+
+//Manually check E_u and E_{u’} are isomorphic modulo the relation (2.3)
+g:= 2^4*(t^6*z - 4*t^5*z + 5*t^4*z - 5/2*t^3*z + 1/2*t*z - u^6 + 4*u^5 - 5*u^4 + 5/2*u^3 - 1/2*u - 1/8*z + 1/8);
+A:=Numerator(aInvariants(E)[4]);
+B:=Numerator(aInvariants(E)[5]);
+A2:=Numerator(aInvariants(E2)[4]);
+B2:=Numerator(aInvariants(E2)[5]);
+//Resultants are 0, showing the elliptic curves E_u and E_{u’} are isomorphic modulo (2.3)
+Resultant(P!(A/g^4)-A2,h,z);
+Resultant(P!(B/g^6)-B2,h,z);
+
+
+
+
+
+
+
