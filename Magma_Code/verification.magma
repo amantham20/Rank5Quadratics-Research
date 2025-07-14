@@ -1,0 +1,9 @@
+P<x>:=PolynomialRing(Rationals());
+
+f:=1025*x^6 + 24334*x^4 + 3025*x^2 - 160;
+
+C:=HyperellipticCurve(f);
+
+J:=Jacobian(C);
+
+TorsionSubgroup(J);

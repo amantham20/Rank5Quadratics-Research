@@ -1,0 +1,63 @@
+P<t>:=PolynomialRing(Rationals());
+P2<t>:=FieldOfFractions(P);
+R<z>:=PolynomialRing(P2);
+
+//Taken from Table 6 (with N=10)  in Howe, Leprevost, Poonen (attached paper)
+AA:=-(2*t^2-2*t+1)*(4*t^4-12*t^3+6*t^2+2*t-1);
+BB:=16*(t^2-3*t+1)*(t-1)^5*t^5;
+
+//Construct a root w of x^2+AAx+BB
+
+h:=z^2+AA*z+BB;
+K<w>:=ext<P2|h>;
+
+//Applying Proposition 4 with a1=b1=0, and a2,a3 and b2,b3 the roots of x^2+AAx+B in different orders
+
+R2<X>:=PolynomialRing(K);
+h:=X^2+AA*X+BB;
+a1:=0;
+a2:=Roots(h)[1][1];
+a3:=Roots(h)[2][1];
+b1:=0;
+b2:=a3;
+b3:=a2;
+
+//Construct quantities in Proposition 4
+
+A1:=(a3-a2)^2/(b3-b2)+(a2-a1)^2/(b2-b1)+(a1-a3)^2/(b1-b3);
+B1:=(b3-b2)^2/(a3-a2)+(b2-b1)^2/(a2-a1)+(b1-b3)^2/(a1-a3);
+A2:=a1*(b3-b2)+a2*(b1-b3)+a3*(b2-b1);
+B2:=b1*(a3-a2)+b2*(a1-a3)+b3*(a2-a1);
+
+//These are the discriminants \Delta_f and \Delta_g
+D1:=(a1-a2)^2*(a1-a3)^2*(a2-a3)^2;
+D2:=(b1-b2)^2*(b1-b3)^2*(b2-b3)^2;
+
+A:=D2*A1/A2;
+B:=D1*B1/B2;
+
+h:=-(A*(a2-a1)*(a1-a3)*X^2+B*(b2-b1)*(b1-b3))*(A*(a3-a2)*(a2-a1)*X^2+B*(b3-b2)*(b2-b1))*(A*(a1-a3)*(a3-a2)*X^2+B*(b1-b3)*(b3-b2));
+
+//Simplifying h a bit
+c3:=P2!Coefficient(h,6);
+c2:=P2!Coefficient(h,4);
+c1:=P2!Coefficient(h,2);
+c0:=P2!Coefficient(h,0);
+
+g:=GCD([Numerator(c0),Numerator(c1),Numerator(c2),Numerator(c3)])/((t^2 - t + 1/2)*(t^4 - 3*t^3 + 3/2*t^2 + 1/2*t - 1/4));
+
+
+c3:=c3/g;
+c2:=c2/g;
+c1:=c1/g;
+c0:=c0/g;
+
+// The genus 2 curve y^2=h has Jacobian (2,2)-isogenous to E1xE2 below, and in particular they have the same 5-torsion
+
+E1:=EllipticCurve([0,c2,0,c1*c3,c0*c3^2]);
+E2:=EllipticCurve([0,c1,0,c2*c0,c3*c0^2]);
+
+//Both elliptic curves should have a 5-tosion point (in fact, they both have a 10-torsion point)
+
+TorsionSubgroup(E1);
+TorsionSubgroup(E2);
