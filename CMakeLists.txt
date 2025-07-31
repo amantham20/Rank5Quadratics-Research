@@ -29,12 +29,18 @@ endif()
 find_package(Boost REQUIRED)
 find_package(Catch2 REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(TBB REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 #add_subdirectory(third_party/Catch2)
 #set(CMAKE_CXX_COMPILER "/opt/homebrew/opt/llvm/bin/clang++")
-
+execute_process(
+        COMMAND brew --prefix
+        OUTPUT_VARIABLE HOMEBREW_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
@@ -46,6 +52,10 @@ target_link_libraries(MathResearch2 PRIVATE Boost::boost)
 # Generator Bloom Filter executable
 add_executable(MathResearch2_Generator_bf generator_bf_main.cpp Fraction.hpp BloomFilter.hpp Logger.hpp)
 target_link_libraries(MathResearch2_Generator_bf PRIVATE Boost::boost)
+target_link_libraries(MathResearch2_Generator_bf PRIVATE TBB::tbb)
+#target_include_directories(MathResearch2_Generator_bf PRIVATE ${HOMEBREW_PREFIX}/include)
+
+
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(MathResearch2_Generator_bf PUBLIC OpenMP::OpenMP_CXX)
@@ -56,11 +66,14 @@ endif()
 add_executable(MathResearch2_Checker_bf checker_bf_main.cpp Fraction.hpp BloomFilter.hpp Logger.hpp)
 target_link_directories(MathResearch2_Checker_bf PRIVATE Boost::boost)
 
+
+
 # Test executable
 add_executable(MathResearch2_Tests tests/test1.cpp Fraction.hpp tests/FractionTest.cpp tests/BitsetTest.cpp)
 target_link_libraries(MathResearch2_Tests PRIVATE Catch2::Catch2WithMain Boost::boost)
 
 add_executable(sample sample.cpp)
+target_link_libraries(sample PRIVATE Boost::boost)
 
 include(Ctest)
 enable_testing()
