@@ -1,6 +1,6 @@
 
 
-#include <omp.h>
+// Standalone priority-queue experiment; the actual checker is generator_bf_main.cpp.
 #include <iostream>
 #include <queue>
 
@@ -11,7 +11,7 @@ int main() {
   auto cmp = [](const Bucket& a, const Bucket& b) { return a.first > b.first; };
   std::priority_queue<Bucket, std::vector<Bucket>, decltype(cmp)> top_buckets(cmp);
 
-  for (int i = 0; i < 1000; ++i) {
+  for (std::size_t i = 0; i < 1000; ++i) {
     if (top_buckets.size() < 10) {
       top_buckets.push(std::make_pair(i, i));
     } else if (top_buckets.top().first < i) {
