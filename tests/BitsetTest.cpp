@@ -1,42 +1,24 @@
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch_all.hpp>
-#include "../Fraction.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include "Fraction.hpp"
 
-#include <boost/multiprecision/cpp_int.hpp>
-
-#include <boost/math/common_factor.hpp>
-
-using namespace boost::multiprecision;
-
-#include <bitset>
-
-
-TEST_CASE("BitSet") {
-  Fraction frac("12/8");
-  REQUIRE(frac.numerator == 3);
-  REQUIRE(frac.denominator == 2);
-
-  REQUIRE(frac.numSign == std::bitset<32>("10"));
-
-  REQUIRE(frac.denSign == std::bitset<32>("01"));
+TEST_CASE("Prime parity includes numerator and denominator") {
+  REQUIRE(Fraction("12/8").signature() == 3); // 3/2: odd powers of 2 and 3
+  REQUIRE(Fraction("600112800/8748000").signature() == 12); // 7^3/5
+  REQUIRE(Fraction(12,1).signature() == Fraction(75,1).signature());
+  REQUIRE(Fraction(9,4).signature() == 0);
 }
 
-TEST_CASE("BitSet 2") {
-  Fraction frac("600112800/8748000");
-  REQUIRE(frac.numerator == 343);
-  REQUIRE(frac.denominator == 5);
-
-  REQUIRE(frac.numSign == std::bitset<32>("1000"));
-
-  REQUIRE(frac.denSign == std::bitset<32>("100"));
+TEST_CASE("Constructor choice and sign do not change the parity signature") {
+  for (int num = -20; num <= 20; ++num) {
+    for (int den = 1; den <= 20; ++den) {
+      const Fraction f(num,den);
+      REQUIRE(f.signature() == Fraction(f.toString()).signature());
+      REQUIRE(f.signature() == Fraction(-num,den).signature());
+    }
+  }
 }
 
-TEST_CASE("BitSet 3") {
-  Fraction frac("600112800/7919");
-  REQUIRE(frac.numerator == 600112800);
-  REQUIRE(frac.denominator == 7919);
-
-  REQUIRE(frac.numSign == std::bitset<32>("1011"));
-
-  REQUIRE(frac.denSign == std::bitset<32>("000"));
+TEST_CASE("Signatures deliberately collide for primes above the filter") {
+  REQUIRE(Fraction(233,1).signature() == Fraction(239,1).signature());
+  REQUIRE(Fraction(233,1).toBitString().size() == 50);
 }
